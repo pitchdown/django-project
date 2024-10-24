@@ -30,7 +30,7 @@
         <ol class="breadcrumb justify-content-center mb-0">
             <li class="breadcrumb-item"><a href="#">Home</a></li>
             <li class="breadcrumb-item"><a href="#">Pages</a></li>
-            <li class="breadcrumb-item active text-white">Shop</li>
+            <li class="breadcrumb-item active text-white">{{ slug }}</li>
         </ol>
     </div>
     <!-- Single Page Header End -->
@@ -38,6 +38,15 @@
 
     <!-- Fruits Shop Start-->
     <div class="container-fluid fruite py-5">
+        <div style="margin: 10px auto; width: 80%; max-width: 500px;">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
         <div class="container py-5">
             <h1 class="mb-4">Albums store</h1>
             <div class="row g-4">
@@ -74,14 +83,14 @@
                                         <ul class="list-unstyled fruite-categorie">
                                             <li>
                                                 <div class="d-flex justify-content-between fruite-name">
-                                                    <a href="/products/category"><i
+                                                    <a href="/category"><i
                                                             class="fas me-2"></i>all</a>
                                                 </div>
                                             </li>
                                             {% for category in categories %}
                                                 <li>
                                                     <div class="d-flex justify-content-between fruite-name">
-                                                        <a href="{% url 'category_products_by_id' category.id %}"><i
+                                                        <a href="{% url 'category_products_by_slug' category.slug %}"><i
                                                                 class="fas me-2"></i>{{ category.release_format }}</a>
                                                     </div>
                                                 </li>
@@ -119,7 +128,7 @@
                                     <div class="col-md-6 col-lg-6 col-xl-4">
                                         <div class="rounded position-relative fruite-item">
                                             <div class="fruite-img">
-                                                <a href="/product/{{ product.id }}">
+                                                <a href="/product/{{ product.slug }}">
                                                     <img src="/media/{{ product.image }}"
                                                          class="img-fluid w-100 rounded-top" alt="">
                                                 </a>
@@ -143,14 +152,20 @@
                                 {% endfor %}
                                 <div class="col-12">
                                     <div class="pagination d-flex justify-content-center mt-5">
-                                        <a href="#" class="rounded">&laquo;</a>
-                                        <a href="#" class="active rounded">1</a>
-                                        <a href="#" class="rounded">2</a>
-                                        <a href="#" class="rounded">3</a>
-                                        <a href="#" class="rounded">4</a>
-                                        <a href="#" class="rounded">5</a>
-                                        <a href="#" class="rounded">6</a>
-                                        <a href="#" class="rounded">&raquo;</a>
+                                        {% if products.has_previous %}
+                                            <a href="?page={{ products.previous_page_number }}"
+                                               class="rounded">&laquo;</a>
+                                        {% endif %}
+                                        {% for num in products.paginator.page_range %}
+                                            {% if num == products.number %}
+                                                <a class="active rounded">{{ num }}</a>
+                                            {% else %}
+                                                <a href="?page={{ num }}" class="rounded">{{ num }}</a>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if products.has_next %}
+                                            <a href="?page={{ products.next_page_number }}" class="rounded">&raquo;</a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
