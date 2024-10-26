@@ -3,84 +3,141 @@ from django.contrib import messages
 from store.models import Product
 from django.http import HttpResponse
 from .models import CartItem
+from django.views.generic import ListView, View, TemplateView
+
+class OrderCartView(TemplateView):
+    """
+    View for displaying the shopping cart.
+    """
+    template_name = 'cart.html'  # Template to render for the cart view
+
+    def get_context_data(self, **kwargs):
+        """
+        Adds the cart and total price information to the context.
+        """
+        context = super().get_context_data(**kwargs)  # Get the default context
+        total_price_of_products = 0  # Initialize total price counter
+        cart = self.request.session.get('cart', {})  # Retrieve the cart from the session
+
+        # Calculate total prices for each product in the cart
+        for product_id, product in cart.items():
+            if 'every_product_total' not in product:
+                product['every_product_total'] = 0  # Initialize if not present
+            product['total'] = float(product['price']) * product['quantity']  # Calculate total for this product
+            total_price_of_products += float(product['total'])  # Update total price
+
+        context['cart'] = cart  # Add cart to context
+        context['total_price_of_products'] = total_price_of_products  # Add total price to context
+        return context
 
 
+class AddToCartView(View):
+    """
+    View for adding a product to the shopping cart.
+    """
+    def post(self, request, product_id):
+        """
+        Handles POST requests to add a product to the cart.
+        """
+        product = get_object_or_404(Product, id=product_id)  # Get the product or return a 404 if not found
+        cart = request.session.get('cart', {})  # Retrieve the cart from the session
 
-# Create your views here.
-def order_cart(request):
-    total_price_of_products = 0
-    cart = request.session.get('cart', {})
+        if product.quantity != 0:  # Check if the product is in stock
+            if str(product.id) in cart:  # If the product is already in the cart
+                cart[str(product.id)]['quantity'] += 1  # Increase quantity
+            else:
+                # Add new product to the cart
+                cart[str(product.id)] = {
+                    'name': product.name,
+                    'price': str(product.price),
+                    'quantity': 1,
+                    'image': str(product.image)
+                }
 
-    for product_id, product in cart.items():
-        if 'every_product_total' not in product:
-            product['every_product_total'] = 0
-        product['total'] = float(product['price']) * product['quantity']
-        total_price_of_products += float(product['total'])
+            # Update the CartItem model for persistent storage
+            cart_item, created = CartItem.objects.get_or_create(
+                product=product,
+                user=request.user,
+                defaults={'quantity': 0}  # Default quantity if creating a new CartItem
+            )
+            cart_item.quantity += 1  # Increment quantity in CartItem
+            cart_item.save()  # Save changes
 
-    return render(request, 'cart.html', {
-        'cart': cart,
-        'total_price_of_products': total_price_of_products
-    })
-
-def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    cart = request.session.get('cart', {})
-    print(product.quantity)
-
-    if product.quantity != 0:
-        if str(product.id) in cart:
-            cart[str(product.id)]['quantity'] += 1
-            print('wow')
+            product.quantity -= 1  # Decrease product stock
+            product.save()  # Save product changes
         else:
-            cart[str(product.id)] = {
-                'name': product.name,
-                'price': str(product.price),
-                'quantity': 1,
-                'image': str(product.image)
-            }
+            messages.error(request, 'Product is out of stock. Please choose another product.')  # Show error message
+            return redirect('category_products')  # Redirect to the category page if out of stock
 
-        cart_item, created = CartItem.objects.get_or_create(product=product, user=request.user,
-                                                                defaults={'quantity': 0})
-        cart_item.quantity += 1
-        cart_item.save()
+        request.session['cart'] = cart  # Save updated cart back to the session
+        return redirect('order_cart')  # Redirect to the cart view
 
-        product.quantity -= 1
-        product.save()
-    else:
-        messages.error(request, 'Product is out of stock. Please choose another product.')
-        return redirect('category_products')
 
-    request.session['cart'] = cart
-    return redirect('order_cart')
+class RemoveFromCartView(View):
+    """
+    View for removing a product from the shopping cart.
+    """
+    def post(self, request, product_id):
+        """
+        Handles POST requests to remove a product from the cart.
+        """
+        cart = request.session.get('cart', {})  # Retrieve the cart from the session
+        product = get_object_or_404(Product, id=product_id)  # Get the product or return a 404 if not found
 
-def remove_from_cart(request, product_id):
-    cart = request.session.get('cart', {})
-    product = get_object_or_404(Product, id=product_id)
+        # Check if the product is in the cart
+        if str(product_id) in cart:
+            if cart[str(product_id)]['quantity'] > 1:
+                # Decrease the quantity by 1
+                cart[str(product_id)]['quantity'] -= 1
 
-    if str(product_id) in cart:
-        del cart[str(product_id)]
+                # Update the CartItem in the database
+                cart_item = get_object_or_404(CartItem, product=product, user=request.user)
+                cart_item.quantity -= 1
+                cart_item.save()
 
-    request.session['cart'] = cart
+                messages.success(request, f"Reduced quantity of {product.name} in your cart.")
+            else:
+                # Remove product completely from the cart
+                del cart[str(product_id)]
 
-    cart_item = CartItem.objects.get(product_id=product_id)
+                # Remove CartItem from the database
+                cart_item = get_object_or_404(CartItem, product=product, user=request.user)
+                cart_item.delete()
 
-    product.quantity += cart_item.quantity
-    product.save()
-    cart_item.delete()
+                messages.success(request, f"{product.name} has been removed from your cart.")
 
-    return redirect('order_cart')
+            # Update the product stock
+            product.quantity += 1  # Restore product stock
+            product.save()  # Save product changes
+        else:
+            messages.error(request, "This item is not in your cart.")
 
-def checkout(request):
-    total_price_of_products = 0
-    cart = request.session.get('cart', {})
+        request.session['cart'] = cart  # Save updated cart back to the session
+        return redirect('order_cart')  # Redirect to the cart view
 
-    for product_id, product in cart.items():
-        if 'every_product_total' not in product:
-            product['every_product_total'] = 0
-        product['total'] = float(product['price']) * product['quantity']
-        total_price_of_products += float(product['total'])
 
-    return render(request, 'checkout.html', {
-        'cart': cart,
-        'total_price_of_products': total_price_of_products
-    })
+
+class CheckoutView(TemplateView):
+    """
+    View for displaying the checkout page.
+    """
+    template_name = 'checkout.html'  # Template to render for the checkout view
+
+    def get_context_data(self, **kwargs):
+        """
+        Adds the cart and total price information to the context for checkout.
+        """
+        context = super().get_context_data(**kwargs)  # Get the default context
+        total_price_of_products = 0  # Initialize total price counter
+        cart = self.request.session.get('cart', {})  # Retrieve the cart from the session
+
+        # Calculate total prices for each product in the cart
+        for product_id, product in cart.items():
+            if 'every_product_total' not in product:
+                product['every_product_total'] = 0  # Initialize if not present
+            product['total'] = float(product['price']) * product['quantity']  # Calculate total for this product
+            total_price_of_products += float(product['total'])  # Update total price
+
+        context['cart'] = cart  # Add cart to context
+        context['total_price_of_products'] = total_price_of_products  # Add total price to context
+        return context

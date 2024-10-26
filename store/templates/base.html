@@ -71,7 +71,7 @@
                         <a href="/category" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
                         <div class="dropdown-menu m-0 bg-secondary rounded-0">
                             {% for category in categories %}
-                                <a href="/category/{{ category.id }}"
+                                <a href="/category/{{ category.slug }}"
                                    class="dropdown-item">{{ category.release_format }}</a>
                             {% endfor %}
                         </div>
