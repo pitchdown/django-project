@@ -4,8 +4,9 @@ from store.models import Product
 from django.http import HttpResponse
 from .models import CartItem
 from django.views.generic import ListView, View, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-class OrderCartView(TemplateView):
+class OrderCartView(LoginRequiredMixin, TemplateView):
     """
     View for displaying the shopping cart.
     """
@@ -30,6 +31,16 @@ class OrderCartView(TemplateView):
         context['total_price_of_products'] = total_price_of_products  # Add total price to context
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Check if the user is authenticated before processing the request.
+        Redirect to sign-up if not authenticated.
+        """
+        if not request.user.is_authenticated:
+            messages.error(request, 'You need to sign up or sign in to view your cart.')
+            return redirect('sign_up')  # Redirect to the sign-up page
+        return super().dispatch(request, *args, **kwargs)
+
 
 class AddToCartView(View):
     """
@@ -39,6 +50,10 @@ class AddToCartView(View):
         """
         Handles POST requests to add a product to the cart.
         """
+        if not request.user.is_authenticated:
+            messages.error(request, 'you need to sign up or sign in to add products to the cart')
+            return redirect('sign_up')
+
         product = get_object_or_404(Product, id=product_id)  # Get the product or return a 404 if not found
         cart = request.session.get('cart', {})  # Retrieve the cart from the session
 
@@ -81,6 +96,10 @@ class RemoveFromCartView(View):
         """
         Handles POST requests to remove a product from the cart.
         """
+        if not request.user.is_authenticated:
+            messages.error(request, 'you need to sign up or sign in to remove products from the cart')
+            return redirect('sign_up')
+
         cart = request.session.get('cart', {})  # Retrieve the cart from the session
         product = get_object_or_404(Product, id=product_id)  # Get the product or return a 404 if not found
 
@@ -117,7 +136,7 @@ class RemoveFromCartView(View):
 
 
 
-class CheckoutView(TemplateView):
+class CheckoutView(LoginRequiredMixin, TemplateView):
     """
     View for displaying the checkout page.
     """
@@ -141,3 +160,13 @@ class CheckoutView(TemplateView):
         context['cart'] = cart  # Add cart to context
         context['total_price_of_products'] = total_price_of_products  # Add total price to context
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Check if the user is authenticated before processing the request.
+        Redirect to sign-up if not authenticated.
+        """
+        if not request.user.is_authenticated:
+            messages.error(request, 'You need to sign up or sign in to access the checkout.')
+            return redirect('sign_up')  # Redirect to the sign-up page
+        return super().dispatch(request, *args, **kwargs)
