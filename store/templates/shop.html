@@ -54,10 +54,12 @@
                     <div class="row g-4">
                         <div class="col-xl-3">
                             <div class="input-group w-100 mx-auto d-flex">
-                                <input type="search" class="form-control p-3" placeholder="keywords"
-                                       aria-describedby="search-icon-1">
-                                <span id="search-icon-1" class="input-group-text p-3"><i
-                                        class="fa fa-search"></i></span>
+                                <form method="GET" action="{% url 'search' %}">
+                                    <input type="search" class="form-control p-3" name="q" placeholder="keywords"
+                                           aria-describedby="search-icon-1">
+                                    <span id="search-icon-1" class="input-group-text p-3"><i
+                                            class="fa fa-search"></i></span>
+                                </form>
                             </div>
                         </div>
                         <div class="col-6"></div>
@@ -101,11 +103,15 @@
                                 <div class="col-lg-12">
                                     <div class="mb-3">
                                         <h4 class="mb-2">Price</h4>
-                                        <input type="range" class="form-range w-100" id="rangeInput" name="rangeInput"
-                                               min="0" max="500" value="0" oninput="amount.value=rangeInput.value">
-                                        <output id="amount" name="amount" min-velue="0" max-value="500"
-                                                for="rangeInput">0
-                                        </output>
+                                        <form method="GET" action="{% url 'filtered_category_products' %}" class="mb-4">
+                                            <label for="rangeInput" class="form-label">Filter by Price:
+                                                <output id="amount" name="amount">0</output>
+                                            </label>
+                                            <input type="range" class="form-range w-100" id="rangeInput"
+                                                   name="rangeInput"
+                                                   min="0" max="500" value="0" oninput="amount.value=rangeInput.value">
+                                            <button type="submit" class="btn btn-primary mt-2">Filter</button>
+                                        </form>
                                     </div>
                                 </div>
                                 <div class="col-lg-12">
@@ -141,10 +147,15 @@
                                                 <p>{{ product.description }}</p>
                                                 <div class="d-flex justify-content-between flex-lg-wrap">
                                                     <p class="text-dark fs-5 fw-bold mb-0">{{ product.price }}$</p>
-                                                    <a href="{% url 'add_to_cart' product.id %}"
-                                                       class="btn border border-secondary rounded-pill px-3 text-primary"><i
-                                                            class="fa fa-shopping-bag me-2 text-primary"></i> Add to
-                                                        cart</a>
+                                                    <form action="{% url 'add_to_cart' product.id %}" method="post"
+                                                          style="display: inline;">
+                                                        {% csrf_token %}
+                                                        <button type="submit"
+                                                                class="btn border border-secondary rounded-pill px-3 text-primary">
+                                                            <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to
+                                                            cart
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
