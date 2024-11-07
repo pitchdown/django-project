@@ -5,6 +5,8 @@ from django.views.generic import ListView, TemplateView, DetailView
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.shortcuts import get_object_or_404
+from django.utils import translation
+from django.utils.translation import get_language
 
 # Create your views here.
 
@@ -15,6 +17,12 @@ class IndexView(ListView):
     model = Product  # Specifies the model to use for this view
     template_name = 'home.html'  # Template to render
     context_object_name = 'products'  # Name of the context variable to access in the template
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        current_language = get_language()
+        print(f"Current language: {current_language}")
+        return context
 
 
 @method_decorator(cache_page(60 * 15), name='dispatch')

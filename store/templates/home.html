@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
+{% load i18n %}
+
 
     <!-- Hero Start -->
     <div class="container-fluid py-5 mb-5 hero-header">
@@ -94,7 +96,7 @@
     <div class="container-fluid py-5">
         <div class="container py-5">
             <div class="text-center mx-auto mb-5" style="max-width: 700px;">
-                <h1 class="display-4">Bestseller albums</h1>
+                <h1 class="display-4">{% trans "Bestseller Albums" %}</h1>
             </div>
             <div class="row g-4">
                 {% for product in products %}
@@ -114,13 +116,14 @@
                                         <i class="fas fa-star text-primary"></i>
                                     </div>
                                     <h4 class="mb-3">{{ product.price }}$</h4>
-                                    <h5 class="mb-3">Quantity: {{ product.quantity }}</h5>
+
+                                    <h5 class="mb-3">{% trans "Quantity" %}: {{ product.quantity }}</h5>
                                     <form action="{% url 'add_to_cart' product.id %}" method="post"
                                           style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit"
                                                 class="btn border border-secondary rounded-pill px-3 text-primary">
-                                            <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
+                                            <i class="fa fa-shopping-bag me-2 text-primary"></i>{% trans "Add to Cart" %}
                                         </button>
                                     </form>
                                 </div>

@@ -1,4 +1,5 @@
 {% load cache %}
+{% load i18n %}
 
 <div class="container-fluid fixed-top">
     <div class="container topbar bg-primary d-none d-lg-block">
@@ -19,12 +20,12 @@
                 <span class="fa fa-bars text-primary"></span>
             </button>
             <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
-                {% cache 600 navbar_links %}
+{#                {% cache 600 navbar_links %}#}
                 <div class="navbar-nav mx-auto">
-                    <a href="/" class="nav-item nav-link active">Home</a>
-                    <a href="{% url 'category_products' %}" class="nav-item nav-link">Shop</a>
+                    <a href="/" class="nav-item nav-link active">{% trans "Home" %}</a>
+                    <a href="{% url 'category_products' %}" class="nav-item nav-link">{% trans "Shop" %}</a>
                     <div class="nav-item dropdown">
-                        <a href="/category" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
+                        <a href="/category" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">{% trans "Pages" %}</a>
                         <div class="dropdown-menu m-0 bg-secondary rounded-0">
                             {% for category in categories %}
                                 <a href="/category/{{ category.slug }}"
@@ -32,9 +33,9 @@
                             {% endfor %}
                         </div>
                     </div>
-                    <a href="/contact" class="nav-item nav-link">Contact</a>
+                    <a href="/contact" class="nav-item nav-link">{% trans "Contact" %}</a>
                 </div>
-                {% endcache %}
+{#                {% endcache %}#}
                 
                 <div class="d-flex m-3 me-0">
                     <button class="btn-search btn border border-secondary btn-md-square rounded-circle bg-white me-4"
@@ -54,11 +55,11 @@
                         </a>
                         <form method="post" action="{% url 'logout' %}" style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Log Out</button>
+                            <button type="submit" class="btn btn-danger">{% trans "Log Out" %}</button>
                         </form>
                     {% else %}
-                        <a href="{% url 'sign_in' %}" class="btn btn-primary">Log In</a>
-                        <a href="{% url 'sign_up' %}" class="btn btn-secondary">Sign Up</a>
+                        <a href="{% url 'sign_in' %}" class="btn btn-primary">{% trans "Log In" %}</a>
+                        <a href="{% url 'sign_up' %}" class="btn btn-secondary">{% trans "Sign Up" %}</a>
                     {% endif %}
                 </div>
             </div>
